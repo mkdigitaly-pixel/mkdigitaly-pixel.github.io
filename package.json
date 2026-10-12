@@ -1,0 +1,7 @@
+{
+  "name": "znaetelivychto-rss",
+  "private": true,
+  "type": "module",
+  "scripts": { "build": "node scripts/build-site.mjs", "test": "node --test" },
+  "engines": { "node": ">=22" }
+}
