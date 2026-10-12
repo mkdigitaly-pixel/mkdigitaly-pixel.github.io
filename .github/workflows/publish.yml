@@ -1,0 +1,42 @@
+name: Publish site and RSS
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    # 18:05, 18:20 and 18:35 in Yekaterinburg; later runs recover a delayed first run.
+    - cron: '5,20,35 13 * * *'
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+      - name: Check publication schedule and static output
+        run: npm test
+      - name: Build current site and RSS
+        run: npm run build
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist
+      - name: Publish
+        id: deployment
+        uses: actions/deploy-pages@v4
