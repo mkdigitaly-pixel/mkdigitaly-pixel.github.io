@@ -1,5 +1,5 @@
 import config from '../config.json' with { type: 'json' };
-import { allArticles, publishedArticles, articleUrl, displayDate, siteOrigin, siteTitle, siteDescription, xmlEscape } from '../lib/publication.mjs';
+import { allArticles, siteArticles, sourcePublishedAt, articleUrl, displayDate, siteOrigin, siteTitle, siteDescription, xmlEscape } from '../lib/publication.mjs';
 
 const esc = xmlEscape;
 export function layout(body, { title = siteTitle, description = siteDescription, canonical = siteOrigin + '/', cover, home = false } = {}) {
@@ -7,16 +7,16 @@ export function layout(body, { title = siteTitle, description = siteDescription,
 }
 
 export function renderHome(now) {
-  const available = new Set(publishedArticles(now).map(a => a.id));
+  const available = new Set(siteArticles(now).map(a => a.id));
   const featured = allArticles[0];
-  const date = article => esc(displayDate(article.publishedAt));
+  const date = article => esc(displayDate(sourcePublishedAt(article)));
   const link = article => `/articles/${article.slug}/`;
   return layout(`<section class="intro"><p class="eyebrow">НЕБОЛЬШИЕ ОТКРЫТИЯ КАЖДЫЙ ДЕНЬ</p><h1>Привычные вещи.<br><em>Неожиданные ответы.</em></h1><p class="intro-text">Проверяем интуицию, решаем задачи и разбираемся,<br class="desktop-break"> почему математика умеет удивлять.</p></section>
 <section class="featured" aria-label="Первая статья серии"><div class="feature-image"><img src="${featured.cover}" alt="Три задачи на внимательное чтение" width="1200" height="675"></div><div class="feature-copy"><div class="meta"><span>${esc(featured.rubric)}</span><span>${available.has(featured.id) ? date(featured) : `Выходит ${date(featured)}`}</span></div><h2>${esc(featured.title)}</h2><p>${esc(featured.description)}</p>${available.has(featured.id) ? `<a class="button" href="${link(featured)}">Читать и решать <span>↗</span></a>` : '<p class="release-note">Скоро здесь · 18:00 по Екатеринбургу</p>'}</div></section>
-<section class="series" aria-labelledby="series-title"><div class="section-heading"><h2 id="series-title">Давайте разберёмся</h2><span>Первая серия · 3 статьи</span></div><div class="article-grid">${allArticles.map((article, index) => `<article class="card"><div class="card-image"><img src="${article.cover}" alt="" width="1200" height="675"><span class="number">0${index + 1}</span></div><p class="card-meta">${esc(article.rubric)} <span>· ${date(article)}</span></p><h3>${available.has(article.id) ? `<a href="${link(article)}">${esc(article.title)}</a>` : esc(article.title)}</h3><p>${esc(article.description)}</p>${available.has(article.id) ? `<a class="text-link" href="${link(article)}">Открыть статью ↗</a>` : '<span class="coming">Скоро · 18:00</span>'}</article>`).join('')}</div></section>
+<section class="series" aria-labelledby="series-title"><div class="section-heading"><h2 id="series-title">Давайте разберёмся</h2><span>Первая серия · ${allArticles.length} статей</span></div><div class="article-grid">${allArticles.map((article, index) => `<article class="card"><div class="card-image"><img src="${article.cover}" alt="" width="1200" height="675"><span class="number">${String(index + 1).padStart(2, '0')}</span></div><p class="card-meta">${esc(article.rubric)} <span>· ${date(article)}</span></p><h3>${available.has(article.id) ? `<a href="${link(article)}">${esc(article.title)}</a>` : esc(article.title)}</h3><p>${esc(article.description)}</p>${available.has(article.id) ? `<a class="text-link" href="${link(article)}">Открыть статью ↗</a>` : '<span class="coming">Скоро · 18:00</span>'}</article>`).join('')}</div></section>
 <section class="subscribe"><div><p class="eyebrow">ЧИТАТЬ В УДОБНОМ МЕСТЕ</p><h2>Есть вопрос — будет открытие.</h2><p>Следите за каналом в Дзене или добавьте нашу RSS-ленту в свой сервис чтения.</p></div><a class="button light" href="/rss.xml">Открыть RSS <span>↗</span></a></section>`, { home: true });
 }
 
 export function renderArticle(article) {
-  return layout(`<article class="reading"><a class="back" href="/">← Все статьи</a><div class="meta"><span>${esc(article.rubric)}</span><time datetime="${esc(article.publishedAt)}">${esc(displayDate(article.publishedAt))}</time></div><h1>${esc(article.title)}</h1><p class="standfirst">${esc(article.description)}</p><img class="reading-cover" src="${article.cover}" alt="${esc(article.title)}" width="1200" height="675"><div class="article-body">${article.html}</div><p class="reading-end"><a href="https://dzen.ru/znaetelivychto" target="_blank" rel="noreferrer">Читать канал в Дзене ↗</a></p></article>`, { title: `${article.title} — ${siteTitle}`, description: article.description, canonical: articleUrl(article), cover: article.cover });
+  return layout(`<article class="reading"><a class="back" href="/">← Все статьи</a><div class="meta"><span>${esc(article.rubric)}</span><time datetime="${esc(sourcePublishedAt(article))}">${esc(displayDate(sourcePublishedAt(article)))}</time></div><h1>${esc(article.title)}</h1><p class="standfirst">${esc(article.description)}</p><img class="reading-cover" src="${article.cover}" alt="${esc(article.title)}" width="1200" height="675"><div class="article-body">${article.html}</div><p class="reading-end"><a href="https://dzen.ru/znaetelivychto" target="_blank" rel="noreferrer">Читать канал в Дзене ↗</a></p></article>`, { title: `${article.title} — ${siteTitle}`, description: article.description, canonical: articleUrl(article), cover: article.cover });
 }
