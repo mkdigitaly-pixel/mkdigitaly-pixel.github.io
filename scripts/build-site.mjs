@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { publishedArticles, articleUrl, buildRss, siteOrigin, xmlEscape } from '../lib/publication.mjs';
+import { siteArticles, articleUrl, buildRss, siteOrigin, xmlEscape } from '../lib/publication.mjs';
 import { renderHome, renderArticle, layout } from './render.mjs';
 
 export const projectDirectory = fileURLToPath(new URL('..', import.meta.url));
@@ -22,7 +22,7 @@ export async function buildSite({ now = new Date(), outputDirectory = path.join(
     try { await fs.access(output); throw new Error('Refusing to overwrite an unmarked output directory'); }
     catch (missing) { if (missing.code !== 'ENOENT') throw missing; }
   }
-  const articles = publishedArticles(now);
+  const articles = siteArticles(now);
   await fs.mkdir(output, { recursive: true });
   await fs.writeFile(marker, 'Generated publication output\n');
   await fs.cp(path.join(root, 'public'), output, { recursive: true });
