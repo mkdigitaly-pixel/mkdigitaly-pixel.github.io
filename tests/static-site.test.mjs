@@ -32,7 +32,7 @@ test('all ten source pages exist for initial RSS review, independently of Dzen s
     assert.ok(head.includes('<meta name="zen-verification" content="' + config.zenVerification + '">'));
     assert.equal((home.match(/name="zen-verification"/g) ?? []).length, 1);
     assert.ok(home.includes('href="' + siteOrigin + '/rss.xml"'));
-    assert.ok(home.includes('Первая серия · 10 статей'));
+    assert.ok(home.includes('Первая серия · ' + allArticles.length + ' статей'));
     assert.ok(home.includes('class="number">10</span>'));
     for (const article of allArticles) assert.ok(!home.includes(article.html));
     await assert.rejects(fs.access(path.join(outputDirectory, 'data', 'articles.json')), { code: 'ENOENT' });
