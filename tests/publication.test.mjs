@@ -57,7 +57,7 @@ test('XML escapes text and safely splits CDATA terminators', () => {
 test('the complete prepared feed includes new materials and future dates respect three daily release slots', () => {
  const latestSource = new Date(Math.max(...allArticles.map(a => new Date(sourcePublishedAt(a)).getTime())) + 1);
  const rss = buildRss(latestSource);
- assert.equal((rss.match(/<item>/g) ?? []).length, allArticles.length);
+ assert.equal((rss.match(/<category>format-article<\/category>/g) ?? []).length, allArticles.length);
  const days = new Map();
  for (const a of allArticles.filter(a => a.publishedAt >= '2026-10-23')) {
   const local = new Date(new Date(a.publishedAt).getTime() + 5 * 3600000).toISOString();
@@ -71,4 +71,19 @@ test('the complete prepared feed includes new materials and future dates respect
   values.sort((a,b)=>a-b);
   for(let i=1;i<values.length;i++)assert.ok(values[i]-values[i-1]>=3*3600000,day);
  }
+});
+
+test('the single form trial is a draft post outside the article schedule', () => {
+  const now = '2026-11-07T11:00:00Z';
+  const rss = buildRss(now);
+  const items = Array.from(rss.matchAll(/<item>([\s\S]*?)<\/item>/g), match => match[1]);
+  const drafts = items.filter(item => item.includes('<category>native-draft</category>'));
+  assert.equal(items.length, siteArticles(now).length + 1);
+  assert.equal(drafts.length, 1);
+  assert.match(drafts[0], /<category>format-post<\/category>/);
+  assert.ok(!drafts[0].includes('<category>format-article</category>'));
+  assert.ok(drafts[0].includes('<guid isPermaLink="true">' + siteOrigin + '/proby/forma-poslovicy/</guid>'));
+  assert.ok(drafts[0].includes('https://forms.yandex.ru/u/6aeed19f6d2d730d8fe02689/?iframe=1'));
+  assert.ok(!drafts[0].includes('<iframe'));
+  assert.ok(!siteArticles(now).some(article => articleUrl(article) === siteOrigin + '/proby/forma-poslovicy/'));
 });
