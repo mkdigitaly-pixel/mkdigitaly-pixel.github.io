@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import { publishedArticles, siteArticles, sourcePublishedAt, buildRss, cdata, xmlEscape, siteOrigin, allArticles, articleUrl } from '../lib/publication.mjs';
 
+import { releaseTimes } from '../lib/schedule.mjs';
+
 const available = '2026-10-15T13:00:00Z';
 const initialArticles = allArticles.filter(a => /^p(?:0[1-9]|10)$/.test(a.id));
 test('source pages are available before their original planned Dzen dates', () => {
@@ -63,7 +65,10 @@ test('the complete prepared feed includes new materials and future dates respect
   const local = new Date(new Date(a.publishedAt).getTime() + 5 * 3600000).toISOString();
   const key = local.slice(0,10), values=days.get(key)??[];
   values.push(new Date(a.publishedAt).getTime());days.set(key,values);
-  assert.ok(['12:00','15:00','18:00'].includes(local.slice(11,16)),a.id);
+  const time = local.slice(11,16);
+  const reservedBeforeChange = a.id === 'p64' && a.publishedAt === '2026-11-11T12:00:00+05:00';
+  const allowedTimes = key < '2026-11-11' ? ['12:00','15:00','18:00'] : releaseTimes;
+  assert.ok(reservedBeforeChange || allowedTimes.includes(time), a.id);
   assert.ok(rss.includes('<pubDate>'+new Date(a.publishedAt).toUTCString()+'</pubDate>'));
  }
  for (const [day, values] of days) {

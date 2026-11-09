@@ -10,4 +10,11 @@ test('late preparation skips dates less than an hour ahead and protects off-grid
  assert.deepEqual(allocateReleaseSlots([],{now:'2026-10-23T14:30:00+05:00',count:1}),['2026-10-23T18:00:00+05:00']);
  assert.deepEqual(allocateReleaseSlots([{publishedAt:'2026-10-23T14:00:00+05:00'}],{now:'2026-10-22T14:00:00+05:00',count:1}),['2026-10-23T18:00:00+05:00']);
 });
-
+test('the Moscow windows preserve the reserved morning slot and allow three releases on free days', () => {
+ const now = '2026-11-11T10:00:00+05:00';
+ const existing = [{publishedAt:'2026-11-11T12:00:00+05:00'}];
+ assert.deepEqual(allocateReleaseSlots(existing,{now}),[
+ '2026-11-11T15:00:00+05:00','2026-11-11T18:00:00+05:00','2026-11-12T15:00:00+05:00']);
+ assert.deepEqual(allocateReleaseSlots([],{now}),[
+ '2026-11-11T15:00:00+05:00','2026-11-11T18:00:00+05:00','2026-11-11T21:00:00+05:00']);
+});
