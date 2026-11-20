@@ -38,6 +38,7 @@ test('all ten source pages exist for initial RSS review, independently of Dzen s
     await assert.rejects(fs.access(path.join(outputDirectory, 'data', 'articles.json')), { code: 'ENOENT' });
     await fs.access(path.join(outputDirectory, 'covers', '10-v2.png'));
     await fs.access(path.join(outputDirectory, '.nojekyll'));
+    await assert.rejects(fs.access(path.join(outputDirectory, 'zvezdy')), { code: 'ENOENT' });
   }
 });
 
@@ -45,3 +46,4 @@ test('build refuses output paths outside its generated folders', async () => {
   await assert.rejects(buildSite({ outputDirectory: projectDirectory }), /Output must/);
   await assert.rejects(buildSite({ outputDirectory: path.join(projectDirectory, 'public') }), /Output must/);
 });
+
