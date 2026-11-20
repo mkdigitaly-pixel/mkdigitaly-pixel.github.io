@@ -3,6 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { siteArticles, articleUrl, buildRss, siteOrigin, xmlEscape } from '../lib/publication.mjs';
 import { renderHome, renderArticle, layout } from './render.mjs';
+import { buildStars } from '../channels/zvezdy/build.mjs';
 
 export const projectDirectory = fileURLToPath(new URL('..', import.meta.url));
 export async function buildSite({ now = new Date(), outputDirectory = path.join(projectDirectory, 'dist') } = {}) {
@@ -25,11 +26,7 @@ export async function buildSite({ now = new Date(), outputDirectory = path.join(
   const articles = siteArticles(now);
   await fs.mkdir(output, { recursive: true });
   await fs.writeFile(marker, 'Generated publication output\n');
-  await fs.cp(path.join(root, 'public'), output, {
-    recursive: true,
-    // This channel now has its own site and independent publication workflow.
-    filter: source => source !== path.join(root, 'public', 'zvezdy'),
-  });
+  await fs.cp(path.join(root, 'public'), output, { recursive: true });
   await fs.writeFile(path.join(output, '.nojekyll'), '');
   await fs.writeFile(path.join(output, 'index.html'), renderHome(now));
   await fs.writeFile(path.join(output, 'rss.xml'), buildRss(now));
@@ -43,7 +40,8 @@ export async function buildSite({ now = new Date(), outputDirectory = path.join(
     await fs.mkdir(directory, { recursive: true });
     await fs.writeFile(path.join(directory, 'index.html'), renderArticle(article));
   }
-  return { outputDirectory: output, articles: articles.length };
+  const stars = await buildStars(output, now);
+  return { outputDirectory: output, articles: articles.length, stars };
 }
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   console.log(JSON.stringify(await buildSite()));

@@ -2,16 +2,18 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { xmlEscape, cdata } from '../../lib/publication.mjs';
+import config from './config.json' with { type: 'json' };
 
 const sourceDirectory = path.dirname(fileURLToPath(import.meta.url));
-const basePath = '/zvezdy';
-const origin = 'https://mkdigitaly-pixel.github.io';
+const basePath = config.basePath;
+const origin = config.origin;
 const channelUrl = `${origin}${basePath}/`;
 const title = 'Звезды крупным планом';
 const description = 'Истории советского кино и новости российского шоу-бизнеса.';
 
 function layout(body, { pageTitle = title, canonical = channelUrl, image } = {}) {
-  return `<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${xmlEscape(pageTitle)}</title><meta name="description" content="${xmlEscape(description)}"><link rel="canonical" href="${canonical}"><link rel="alternate" type="application/rss+xml" title="${title}" href="${channelUrl}rss.xml"><link rel="stylesheet" href="${basePath}/style.css">${image ? `<meta property="og:image" content="${origin}${image}">` : ''}</head><body><header><a class="brand" href="${basePath}/"><img src="${basePath}/avatar.jpg" alt="" width="52" height="52"><span>${title}</span></a><a href="${basePath}/rss.xml">RSS</a></header><main>${body}</main><footer>${title} · <a href="${basePath}/rss.xml">RSS-лента</a></footer></body></html>\n`;
+  const verification = canonical === channelUrl ? `<meta name="zen-verification" content="${xmlEscape(config.zenVerification)}">` : '';
+  return `<!doctype html><html lang="ru"><head><meta charset="utf-8">${verification}<meta name="viewport" content="width=device-width,initial-scale=1"><title>${xmlEscape(pageTitle)}</title><meta name="description" content="${xmlEscape(description)}"><link rel="canonical" href="${canonical}"><link rel="alternate" type="application/rss+xml" title="${title}" href="${channelUrl}rss.xml"><link rel="stylesheet" href="${basePath}/style.css">${image ? `<meta property="og:image" content="${origin}${image}">` : ''}</head><body><header><a class="brand" href="${basePath}/"><img src="${basePath}/avatar.jpg" alt="" width="52" height="52"><span>${title}</span></a><a href="${basePath}/rss.xml">RSS</a></header><main>${body}</main><footer>${title} · <a href="${basePath}/rss.xml">RSS-лента</a></footer></body></html>\n`;
 }
 
 export function buildFeed(articles, now = new Date()) {
@@ -33,6 +35,11 @@ export async function buildStars(outputDirectory, now = new Date()) {
   const articles = JSON.parse(await fs.readFile(path.join(sourceDirectory, 'articles.json'), 'utf8'));
   const output = path.join(outputDirectory, 'zvezdy');
   await fs.mkdir(output, { recursive: true });
+  if (!/^[A-Za-z0-9]+$/.test(config.zenVerification)) throw new Error('Invalid stars verification token');
+  const verificationFile = 'zen_' + config.zenVerification + '.html';
+  const verificationHtml = '<meta name="zen-verification" content="' + xmlEscape(config.zenVerification) + '" />\n';
+  await fs.writeFile(path.join(outputDirectory, verificationFile), verificationHtml);
+  await fs.writeFile(path.join(output, verificationFile), verificationHtml);
   const cards = articles.map(article => `<article class="card"><a href="${basePath}/articles/${article.slug}/"><img src="${article.cover}" alt="" width="${article.coverWidth}" height="${article.coverHeight}"><h2>${xmlEscape(article.title)}</h2></a><p>${xmlEscape(article.description)}</p></article>`).join('');
   await fs.writeFile(path.join(output, 'index.html'), layout(`<h1>${title}</h1><p class="intro">${description}</p><section class="grid">${cards}</section>`));
   await fs.writeFile(path.join(output, 'rss.xml'), buildFeed(articles, now));

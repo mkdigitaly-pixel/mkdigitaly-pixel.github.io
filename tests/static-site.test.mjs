@@ -5,6 +5,7 @@ import path from 'node:path';
 import { buildSite, projectDirectory } from '../scripts/build-site.mjs';
 import { allArticles, sourcePublishedAt, siteOrigin } from '../lib/publication.mjs';
 import config from '../config.json' with { type: 'json' };
+import starsConfig from '../channels/zvezdy/config.json' with { type: 'json' };
 
 test('all ten source pages exist for initial RSS review, independently of Dzen schedule', async () => {
   const outputDirectory = path.join(projectDirectory, '.qa', 'boundaries');
@@ -38,7 +39,19 @@ test('all ten source pages exist for initial RSS review, independently of Dzen s
     await assert.rejects(fs.access(path.join(outputDirectory, 'data', 'articles.json')), { code: 'ENOENT' });
     await fs.access(path.join(outputDirectory, 'covers', '10-v2.png'));
     await fs.access(path.join(outputDirectory, '.nojekyll'));
-    await assert.rejects(fs.access(path.join(outputDirectory, 'zvezdy')), { code: 'ENOENT' });
+    const starsHome = await fs.readFile(path.join(outputDirectory, 'zvezdy', 'index.html'), 'utf8');
+    const starsRss = await fs.readFile(path.join(outputDirectory, 'zvezdy', 'rss.xml'), 'utf8');
+    assert.ok(starsHome.includes('content="' + starsConfig.zenVerification + '"'));
+    assert.ok(!starsHome.includes(config.zenVerification));
+    assert.equal((starsRss.match(/<item>/g) ?? []).length, 2);
+    assert.ok(starsRss.includes('<title>Звезды крупным планом</title>'));
+    assert.ok(!starsRss.includes('chatgpt.site'));
+    assert.ok(!rss.includes(siteOrigin + '/zvezdy/'));
+    const verificationName = 'zen_' + starsConfig.zenVerification + '.html';
+    for (const directory of [outputDirectory, path.join(outputDirectory, 'zvezdy')]) {
+      const verification = await fs.readFile(path.join(directory, verificationName), 'utf8');
+      assert.equal(verification.trim(), '<meta name="zen-verification" content="' + starsConfig.zenVerification + '" />');
+    }
   }
 });
 
