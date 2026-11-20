@@ -1,0 +1,8 @@
+{
+  "name": "zvezdy-krupnym-planom-rss",
+  "private": true,
+  "type": "module",
+  "scripts": { "build": "node build.mjs", "test": "node --test" },
+  "engines": { "node": ">=22" }
+}
+

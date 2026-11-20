@@ -1,0 +1,12 @@
+services:
+  - type: web
+    runtime: static
+    name: zvezdy-krupnym-planom
+    rootDir: stars-site
+    buildCommand: node build.mjs
+    staticPublishPath: dist
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_VERSION
+        value: 24.14.1
+
