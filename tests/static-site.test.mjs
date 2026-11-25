@@ -43,7 +43,8 @@ test('all ten source pages exist for initial RSS review, independently of Dzen s
     const starsRss = await fs.readFile(path.join(outputDirectory, 'zvezdy', 'rss.xml'), 'utf8');
     assert.ok(starsHome.includes('content="' + starsConfig.zenVerification + '"'));
     assert.ok(!starsHome.includes(config.zenVerification));
-    assert.equal((starsRss.match(/<item>/g) ?? []).length, 2);
+    assert.equal((starsRss.match(/<item>/g) ?? []).length, 10);
+    assert.equal((starsHome.match(/class="card"/g) ?? []).length, 16);
     assert.ok(starsRss.includes('<title>Звезды крупным планом</title>'));
     assert.ok(!starsRss.includes('chatgpt.site'));
     assert.ok(!rss.includes(siteOrigin + '/zvezdy/'));
@@ -59,4 +60,3 @@ test('build refuses output paths outside its generated folders', async () => {
   await assert.rejects(buildSite({ outputDirectory: projectDirectory }), /Output must/);
   await assert.rejects(buildSite({ outputDirectory: path.join(projectDirectory, 'public') }), /Output must/);
 });
-
